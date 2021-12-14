@@ -15,7 +15,7 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     # author : 추후 작성 예정
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     
     def __str__(self):
         return f"[{self.pk}]{self.title} :: {self.author}"
