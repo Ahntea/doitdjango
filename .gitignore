@@ -60,7 +60,6 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-settings.py
 
 # Flask stuff:
 instance/
@@ -134,3 +133,6 @@ dmypy.json
 migrations/
 _media/
 templates/
+
+#secret
+secrets.json
