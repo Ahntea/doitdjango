@@ -1,3 +1,4 @@
+from django.http.response import JsonResponse
 from django.views.generic.edit import UpdateView
 from .models import Post, Category, Tag, Comment
 from django.views.generic import ListView, DetailView, CreateView
@@ -7,6 +8,7 @@ import requests
 from django.core.exceptions import PermissionDenied
 from django.utils.text import slugify
 from .forms import CommentForm
+from django.db.models import Q
 # Create your views here.
 
 class PostList(ListView):
@@ -138,6 +140,22 @@ class PostUpdate(LoginRequiredMixin, UpdateView):
                 self.object.tags.add(tag)
         return response
         
+class PostSearch(PostList):
+    paginate_by =None
+    
+    def get_queryset(self):
+        q = self.kwargs['q']
+        post_list = Post.objects.filter(
+            Q(title__contains=q) | Q(tags__name__contains=q)
+        ).distinct()
+        return post_list
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        q = self.kwargs['q']
+        context['search_info'] = f'Search: {q} ({self.get_queryset().count()})'
+        return context
+
 def new_comment(request, pk):
     if request.user.is_authenticated:
         post = get_object_or_404(Post, pk=pk)
@@ -173,7 +191,8 @@ def delete_comment(request,pk):
         return redirect(post.get_absolute_url())
     else:
         raise PermissionDenied
-    
+
+
     
 ###### 카카오
 
