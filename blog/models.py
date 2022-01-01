@@ -62,6 +62,12 @@ class Post(models.Model):
     def get_content_markdown(self):
         return markdown(self.content)
     
+    def get_avatar_url(self):
+        if self.author.socialaccount_set.exists():
+            return self.author.socialaccount_set.first().get_avata_url()
+        else:
+            return "http://placehold.it/25x25"
+    
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=CASCADE)
