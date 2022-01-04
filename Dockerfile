@@ -8,8 +8,9 @@ WORKDIR /usr/src/app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# RUN apk update
-# RUN apk add postgresql-dev gcc python3-dev musl-dev zlib-dev jpeg-dev linux-headers
+# RUN apt-get update
+# RUN apt-get install -f vim
+#RUN apk add postgresql-dev gcc python3-dev musl-dev zlib-dev jpeg-dev linux-headers
 
 COPY . /usr/src/app/
 
