@@ -25,6 +25,7 @@ parso==0.8.3
 pickleshare==0.7.5
 Pillow==8.4.0
 prompt-toolkit==3.0.24
+psycopg2-binary==2.9.2
 pycparser==2.21
 Pygments==2.10.0
 PyJWT==2.3.0
@@ -38,4 +39,3 @@ tzdata==2021.5
 urllib3==1.26.7
 wcwidth==0.2.5
 zipp==3.6.0
-cryptography
