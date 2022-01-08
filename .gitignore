@@ -136,3 +136,6 @@ templates/
 
 #secret
 secrets.json
+
+.env.prod
+.env.prod.db
