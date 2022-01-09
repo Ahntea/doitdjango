@@ -86,4 +86,11 @@ class Comment(models.Model):
             return self.author.socialaccount_set.first().get_avatar_url()
         else:
             return 'http://placehold.it/50x50'
-    
+
+class FileUpload(models.Model):
+    title = models.TextField(max_length=40, null=True)
+    imgfile = models.ImageField(null=True, upload_to='blog/images/%Y/%m/%d/', blank=True)
+    content = models.TextField()
+
+    def __str__(self):
+        return self.title

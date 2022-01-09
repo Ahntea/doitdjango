@@ -1,14 +1,15 @@
 from django.http.response import JsonResponse
 from django.views.generic.edit import UpdateView
-from .models import Post, Category, Tag, Comment
+from .models import Post, Category, Tag, Comment, FileUpload
 from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render, get_object_or_404
 import requests
 from django.core.exceptions import PermissionDenied
 from django.utils.text import slugify
-from .forms import CommentForm
+from .forms import CommentForm, FileUploadForm
 from django.db.models import Q
+
 # Create your views here.
 
 class PostList(ListView):
@@ -192,6 +193,24 @@ def delete_comment(request,pk):
     else:
         raise PermissionDenied
 
+def fileUpload(request):
+    if request.method == 'POST':
+        title = request.POST['title']
+        content = request.POST['content']
+        img = request.FILES["imgfile"]
+        fileupload = FileUpload(
+            title=title,
+            content=content,
+            imgfile=img,
+        )
+        fileupload.save()
+        return redirect('fileupload')
+    else:
+        fileuploadForm = FileUploadForm
+        context = {
+            'fileuploadForm': fileuploadForm,
+        }
+        return render(request, 'blog/fileupload.html', context)
 
     
 ###### 카카오
