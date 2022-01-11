@@ -411,8 +411,17 @@ class TestView(TestCase):
         self.assertNotIn(self.post_002.title, main_area.text)
         self.assertIn(self.post_003.title, main_area.text)
         self.assertIn(post_about_python.title, main_area.text)
-        
     
+    def test_predict(self):
+        response = self.client.get('/blog/predict/')
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        main_area= soup.find('div', id='main-area')
+        
+        self.assertIn('Image', main_area.text)
+        self.assertIn('pretrained', main_area.text)
+        
     def test_post_list(self):
         # 포스트가 있는 경우
         self.assertEqual(Post.objects.count(),3)

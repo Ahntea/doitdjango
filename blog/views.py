@@ -1,13 +1,13 @@
 from django.http.response import JsonResponse
 from django.views.generic.edit import UpdateView
-from .models import Post, Category, Tag, Comment, FileUpload
+from .models import Post, Category, Tag, Comment
 from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render, get_object_or_404
 import requests
 from django.core.exceptions import PermissionDenied
 from django.utils.text import slugify
-from .forms import CommentForm, FileUploadForm
+from .forms import CommentForm
 from django.db.models import Q
 
 # Create your views here.
@@ -18,41 +18,25 @@ from torchvision import transforms
 import torch
 from torch import nn
 from PIL import Image
-from .preprocess import Rescale, ToTensor, CustomDataset
 from django.conf import settings
 import os
 import io
 import face_recognition
 import numpy as np
-import math
 
 resnet18 = models.resnet18(pretrained=False)
 num_classes = 1
 num_ftrs = resnet18.fc.in_features
 resnet18.fc = torch.nn.Sequential(
-        nn.Linear(num_ftrs, 256),
+        nn.Linear(num_ftrs, 1024),
         nn.Dropout(p=0.3),
-        nn.Linear(256, 128),
-        nn.Dropout(p=0.3),
-        nn.Linear(128, 1))
+        nn.ReLU(),
+        nn.Linear(1024, 1))
 
-# load pretrained DenseNet and go straight to evaluation mode for inference
-# load as global variable here, to avoid expensive reloads with each request
 resnet18.load_state_dict(torch.load(os.path.join(settings.STATIC_ROOT, "checkpoint.pt"),map_location='cpu'))
 resnet18.eval()
 
-# def transform_image(image_url):
-#     composed = transforms.Compose([Rescale((96,96)), ToTensor()])
-   
-#     image,label = CustomDataset(image_url, settings.MEDIA_ROOT, transform=composed)
-#     return image
-
 def transform_image(image_bytes):
-    """
-    Transform image into required DenseNet format: 224x224 with 3 RGB channels and normalized.
-    Return the corresponding tensor.
-    """
-    
     bimage = Image.open(io.BytesIO(image_bytes))
     # print("bimage, shape",bimage)
     cimage = np.array(bimage)
@@ -72,31 +56,21 @@ def transform_image(image_bytes):
     
     my_transforms = transforms.Compose([transforms.Resize((96,96)),
                                         transforms.ToTensor(),
-                                        transforms.Normalize(
-                                            [0.485, 0.456, 0.406],
-                                            [0.229, 0.224, 0.225])])
-    # print("image shpae:",image.shape)
+                                        ])
+    print("image shpae:",np.array(image).shape)
     image = my_transforms(image)
     print("image shpae:",image.reshape(-1,3,96,96).shape)
     return image.reshape(-1,3,96,96)
     
 
 def get_prediction(image_bytes):
-    """For given image bytes, predict the label using the pretrained DenseNet"""
     tensor = transform_image(image_bytes)
     print(tensor.shape)
-    output = resnet18.forward(tensor)
+    output = resnet18(tensor)
     y_hat = output
-    predicted = str(math.sqrt(y_hat.item()))
+    predicted = str(int(y_hat.item()))
 
     return predicted
-# def get_prediction(image_url):
-#     tensor = transform_image(image_url)
-#     output = resnet18.forward(tensor)
-#     y = output
-#     predicted = str(y.item())
-    
-#     return predicted
 
 import base64
 from django.shortcuts import render
@@ -107,31 +81,19 @@ def predict(request):
     predicted_label = None
 
     if request.method == 'POST':
-        # in case of POST: get the uploaded image from the form and process it
         form = ImageUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            # retrieve the uploaded image and convert it to bytes (for PyTorch)
             image = form.cleaned_data['image']
-            # print("image:",image)
             image_bytes = image.file.read()
-            # print("image_bytes:", image_bytes)
-            # convert and pass the image as base64 string to avoid storing it to DB or filesystem
             encoded_img = base64.b64encode(image_bytes).decode('ascii')
-            # print("encoded:",encoded_img)
             image_uri = 'data:%s;base64,%s' % ('image/jpeg', encoded_img)
-            # print("image_uri :", image_uri)
-
-            # get predicted label with previously implemented PyTorch function
             try:
                 predicted_label = get_prediction(image_bytes)
             except RuntimeError as re:
                 print(re)
 
     else:
-        # in case of GET: simply show the empty form for uploading images
         form = ImageUploadForm()
-
-    # pass the form, image URI, and predicted label to the template to be rendered
     context = {
         'form': form,
         'image_uri': image_uri,
@@ -323,34 +285,34 @@ def delete_comment(request,pk):
     else:
         raise PermissionDenied
 
-def fileUpload(request):
-    if request.method == 'POST':
-        title = request.POST['title']
-        content = request.POST['content']
-        img = request.FILES["imgfile"]
-        fileupload = FileUpload(
-            title=title,
-            content=content,
-            imgfile=img,
-        )
+# def fileUpload(request):
+#     if request.method == 'POST':
+#         title = request.POST['title']
+#         content = request.POST['content']
+#         img = request.FILES["imgfile"]
+#         fileupload = FileUpload(
+#             title=title,
+#             content=content,
+#             imgfile=img,
+#         )
 
-        fileupload.save()
+#         fileupload.save()
         
-        image = FileUpload.objects.get(title=title)
-        """
-        image.url를 model에 넣어서 나오는 output을 아래 context로 전달하면 되지 않을까?
-        """
-        context= {
-            'imagename' : title,
-            'image' : image,
-        }
-        return render(request, 'blog/filteredfile.html', context)
-    else:
-        fileuploadForm = FileUploadForm
-        context = {
-            'fileuploadForm': fileuploadForm,
-        }
-        return render(request, 'blog/fileupload.html', context)
+#         image = FileUpload.objects.get(title=title)
+#         """
+#         image.url를 model에 넣어서 나오는 output을 아래 context로 전달하면 되지 않을까?
+#         """
+#         context= {
+#             'imagename' : title,
+#             'image' : image,
+#         }
+#         return render(request, 'blog/filteredfile.html', context)
+#     else:
+#         fileuploadForm = FileUploadForm
+#         context = {
+#             'fileuploadForm': fileuploadForm,
+#         }
+#         return render(request, 'blog/fileupload.html', context)
 
     
 ###### 카카오
