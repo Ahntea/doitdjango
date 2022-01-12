@@ -29,9 +29,9 @@ num_classes = 1
 num_ftrs = resnet18.fc.in_features
 resnet18.fc = torch.nn.Sequential(
         nn.Linear(num_ftrs, 1024),
-        nn.Dropout(p=0.3),
         nn.ReLU(),
-        nn.Linear(1024, 1))
+        nn.Linear(1024,1)
+        )
 
 resnet18.load_state_dict(torch.load(os.path.join(settings.STATIC_ROOT, "checkpoint.pt"),map_location='cpu'))
 resnet18.eval()

@@ -133,6 +133,7 @@ dmypy.json
 migrations/
 _media/
 templates/
+_static/
 
 #secret
 secrets.json
